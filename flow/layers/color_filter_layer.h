@@ -6,19 +6,26 @@
 #define FLUTTER_FLOW_LAYERS_COLOR_FILTER_LAYER_H_
 
 #include "flutter/flow/layers/container_layer.h"
+#include "third_party/skia/include/core/SkColorFilter.h"
 
 namespace flutter {
 
 class ColorFilterLayer : public ContainerLayer {
  public:
-  ColorFilterLayer(SkColor color, SkBlendMode blend_mode);
-  ~ColorFilterLayer() override;
+  ColorFilterLayer(sk_sp<SkColorFilter> filter);
+
+#ifdef FLUTTER_ENABLE_DIFF_CONTEXT
+
+  void Diff(DiffContext* context, const Layer* old_layer) override;
+
+#endif  // FLUTTER_ENABLE_DIFF_CONTEXT
+
+  void Preroll(PrerollContext* context, const SkMatrix& matrix) override;
 
   void Paint(PaintContext& context) const override;
 
  private:
-  SkColor color_;
-  SkBlendMode blend_mode_;
+  sk_sp<SkColorFilter> filter_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(ColorFilterLayer);
 };

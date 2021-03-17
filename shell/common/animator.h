@@ -30,12 +30,13 @@ class Animator final {
  public:
   class Delegate {
    public:
-    virtual void OnAnimatorBeginFrame(fml::TimePoint frame_time) = 0;
+    virtual void OnAnimatorBeginFrame(fml::TimePoint frame_target_time) = 0;
 
     virtual void OnAnimatorNotifyIdle(int64_t deadline) = 0;
 
     virtual void OnAnimatorDraw(
-        fml::RefPtr<Pipeline<flutter::LayerTree>> pipeline) = 0;
+        fml::RefPtr<Pipeline<flutter::LayerTree>> pipeline,
+        fml::TimePoint frame_target_time) = 0;
 
     virtual void OnAnimatorDrawLastLayerTree() = 0;
   };
@@ -46,11 +47,27 @@ class Animator final {
 
   ~Animator();
 
-  float GetDisplayRefreshRate() const;
-
   void RequestFrame(bool regenerate_layer_tree = true);
 
   void Render(std::unique_ptr<flutter::LayerTree> layer_tree);
+
+  //--------------------------------------------------------------------------
+  /// @brief    Schedule a secondary callback to be executed right after the
+  ///           main `VsyncWaiter::AsyncWaitForVsync` callback (which is added
+  ///           by `Animator::RequestFrame`).
+  ///
+  ///           Like the callback in `AsyncWaitForVsync`, this callback is
+  ///           only scheduled to be called once, and it's supposed to be
+  ///           called in the UI thread. If there is no AsyncWaitForVsync
+  ///           callback (`Animator::RequestFrame` is not called), this
+  ///           secondary callback will still be executed at vsync.
+  ///
+  ///           This callback is used to provide the vsync signal needed by
+  ///           `SmoothPointerDataDispatcher`, and for our own flow events.
+  ///
+  /// @see      `PointerDataDispatcher::ScheduleSecondaryVsyncCallback`.
+  void ScheduleSecondaryVsyncCallback(uintptr_t id,
+                                      const fml::closure& callback);
 
   void Start();
 
@@ -58,8 +75,9 @@ class Animator final {
 
   void SetDimensionChangePending();
 
-  // Enqueue |trace_flow_id| into |trace_flow_ids_|.  The corresponding flow
-  // will be ended during the next |BeginFrame|.
+  // Enqueue |trace_flow_id| into |trace_flow_ids_|.  The flow event will be
+  // ended at either the next frame, or the next vsync interval with no active
+  // active rendering.
   void EnqueueTraceFlowId(uint64_t trace_flow_id);
 
  private:
@@ -75,11 +93,16 @@ class Animator final {
 
   const char* FrameParity();
 
+  // Clear |trace_flow_ids_| if |frame_scheduled_| is false.
+  void ScheduleMaybeClearTraceFlowIds();
+
   Delegate& delegate_;
   TaskRunners task_runners_;
   std::shared_ptr<VsyncWaiter> waiter_;
 
-  fml::TimePoint last_begin_frame_time_;
+  fml::TimePoint last_frame_begin_time_;
+  fml::TimePoint last_vsync_start_time_;
+  fml::TimePoint last_frame_target_time_;
   int64_t dart_frame_deadline_;
   fml::RefPtr<LayerTreePipeline> layer_tree_pipeline_;
   fml::Semaphore pending_frame_semaphore_;
@@ -90,7 +113,7 @@ class Animator final {
   bool frame_scheduled_;
   int notify_idle_task_id_;
   bool dimension_change_pending_;
-  SkISize last_layer_tree_size_;
+  SkISize last_layer_tree_size_ = {0, 0};
   std::deque<uint64_t> trace_flow_ids_;
 
   fml::WeakPtrFactory<Animator> weak_factory_;

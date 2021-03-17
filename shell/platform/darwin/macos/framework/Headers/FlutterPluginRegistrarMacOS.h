@@ -4,11 +4,11 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "FlutterPluginMacOS.h"
-
 #import "FlutterBinaryMessenger.h"
 #import "FlutterChannels.h"
 #import "FlutterMacros.h"
+#import "FlutterPluginMacOS.h"
+#import "FlutterTexture.h"
 
 // TODO: Merge this file and FlutterPluginMacOS.h with the iOS FlutterPlugin.h, sharing all but
 // the platform-specific methods.
@@ -20,13 +20,19 @@
  * Currently the macOS PluginRegistrar has very limited functionality, but is expected to expand
  * over time to more closely match the functionality of FlutterPluginRegistrar.
  */
-FLUTTER_EXPORT
+FLUTTER_DARWIN_EXPORT
 @protocol FlutterPluginRegistrar <NSObject>
 
 /**
  * The binary messenger used for creating channels to communicate with the Flutter engine.
  */
 @property(nonnull, readonly) id<FlutterBinaryMessenger> messenger;
+
+/**
+ * Returns a `FlutterTextureRegistry` for registering textures
+ * provided by the plugin.
+ */
+@property(nonnull, readonly) id<FlutterTextureRegistry> textures;
 
 /**
  * The view displaying Flutter content. May return |nil|, for instance in a headless environment.

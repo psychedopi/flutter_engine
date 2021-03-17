@@ -5,8 +5,8 @@
 #ifndef FLUTTER_FLUTTERCHANNELS_H_
 #define FLUTTER_FLUTTERCHANNELS_H_
 
-#include "FlutterBinaryMessenger.h"
-#include "FlutterCodecs.h"
+#import "FlutterBinaryMessenger.h"
+#import "FlutterCodecs.h"
 
 NS_ASSUME_NONNULL_BEGIN
 /**
@@ -32,7 +32,7 @@ typedef void (^FlutterMessageHandler)(id _Nullable message, FlutterReply callbac
  * A channel for communicating with the Flutter side using basic, asynchronous
  * message passing.
  */
-FLUTTER_EXPORT
+FLUTTER_DARWIN_EXPORT
 @interface FlutterBasicMessageChannel : NSObject
 /**
  * Creates a `FlutterBasicMessageChannel` with the specified name and binary
@@ -103,11 +103,7 @@ FLUTTER_EXPORT
  * @param message The message. Must be supported by the codec of this channel.
  * @param callback A callback to be invoked with the message reply from Flutter.
  */
-- (void)sendMessage:(id _Nullable)message
-              reply:(FlutterReply _Nullable)callback
-    // TODO: Add macOS support for replies once
-    // https://github.com/flutter/flutter/issues/18852 is fixed.
-    API_UNAVAILABLE(macos);
+- (void)sendMessage:(id _Nullable)message reply:(FlutterReply _Nullable)callback;
 
 /**
  * Registers a message handler with this channel.
@@ -118,6 +114,14 @@ FLUTTER_EXPORT
  * @param handler The message handler.
  */
 - (void)setMessageHandler:(FlutterMessageHandler _Nullable)handler;
+
+/**
+ * Adjusts the number of messages that will get buffered when sending messages to
+ * channels that aren't fully set up yet.  For example, the engine isn't running
+ * yet or the channel's message handler isn't set up on the Dart side yet.
+ */
+- (void)resizeChannelBuffer:(NSInteger)newSize;
+
 @end
 
 /**
@@ -146,14 +150,14 @@ typedef void (^FlutterMethodCallHandler)(FlutterMethodCall* call, FlutterResult 
  * A constant used with `FlutterMethodCallHandler` to respond to the call of an
  * unknown method.
  */
-FLUTTER_EXPORT
+FLUTTER_DARWIN_EXPORT
 extern NSObject const* FlutterMethodNotImplemented;
 
 /**
  * A channel for communicating with the Flutter side using invocation of
  * asynchronous methods.
  */
-FLUTTER_EXPORT
+FLUTTER_DARWIN_EXPORT
 @interface FlutterMethodChannel : NSObject
 /**
  * Creates a `FlutterMethodChannel` with the specified name and binary messenger.
@@ -214,7 +218,7 @@ FLUTTER_EXPORT
  * Invokes the specified Flutter method with the specified arguments, expecting
  * no results.
  *
- * @see [MethodChannel.setMethodCallHandler](https://docs.flutter.io/flutter/services/MethodChannel/setMethodCallHandler.html)
+ * @see [MethodChannel.setMethodCallHandler](https://api.flutter.dev/flutter/services/MethodChannel/setMethodCallHandler.html)
  *
  * @param method The name of the method to invoke.
  * @param arguments The arguments. Must be a value supported by the codec of this
@@ -238,11 +242,7 @@ FLUTTER_EXPORT
  */
 - (void)invokeMethod:(NSString*)method
            arguments:(id _Nullable)arguments
-              result:(FlutterResult _Nullable)callback
-    // TODO: Add macOS support for replies once
-    // https://github.com/flutter/flutter/issues/18852 is fixed.
-    API_UNAVAILABLE(macos);
-
+              result:(FlutterResult _Nullable)callback;
 /**
  * Registers a handler for method calls from the Flutter side.
  *
@@ -252,6 +252,14 @@ FLUTTER_EXPORT
  * @param handler The method call handler.
  */
 - (void)setMethodCallHandler:(FlutterMethodCallHandler _Nullable)handler;
+
+/**
+ * Adjusts the number of messages that will get buffered when sending messages to
+ * channels that aren't fully set up yet.  For example, the engine isn't running
+ * yet or the channel's message handler isn't set up on the Dart side yet.
+ */
+- (void)resizeChannelBuffer:(NSInteger)newSize;
+
 @end
 
 /**
@@ -264,7 +272,7 @@ typedef void (^FlutterEventSink)(id _Nullable event);
 /**
  * A strategy for exposing an event stream to the Flutter side.
  */
-FLUTTER_EXPORT
+FLUTTER_DARWIN_EXPORT
 @protocol FlutterStreamHandler
 /**
  * Sets up an event stream and begin emitting events.
@@ -302,13 +310,13 @@ FLUTTER_EXPORT
 /**
  * A constant used with `FlutterEventChannel` to indicate end of stream.
  */
-FLUTTER_EXPORT
+FLUTTER_DARWIN_EXPORT
 extern NSObject const* FlutterEndOfEventStream;
 
 /**
  * A channel for communicating with the Flutter side using event streams.
  */
-FLUTTER_EXPORT
+FLUTTER_DARWIN_EXPORT
 @interface FlutterEventChannel : NSObject
 /**
  * Creates a `FlutterEventChannel` with the specified name and binary messenger.

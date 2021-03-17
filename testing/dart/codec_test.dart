@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// @dart = 2.6
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -28,9 +29,21 @@ void main() {
   test('Fails with invalid data', () async {
     final Uint8List data = Uint8List.fromList(<int>[1, 2, 3]);
     expect(
-      ui.instantiateImageCodec(data),
-      throwsA(exceptionWithMessage('operation failed'))
+      () => ui.instantiateImageCodec(data),
+      throwsA(exceptionWithMessage('Invalid image data'))
     );
+  });
+
+  test('getNextFrame fails with invalid data', () async {
+    Uint8List data = await _getSkiaResource('flutter_logo.jpg').readAsBytes();
+    data = Uint8List.view(data.buffer, 0, 4000);
+    final ui.Codec codec = await ui.instantiateImageCodec(data);
+    try {
+      await codec.getNextFrame();
+      fail('exception not thrown');
+    } catch(e) {
+      expect(e, exceptionWithMessage('Codec failed'));
+    }
   });
 
   test('nextFrame', () async {
